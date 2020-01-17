@@ -1,7 +1,6 @@
 // ros lib
 #include <ros.h>
 #include <std_msgs/String.h>
-#include <std_msgs/Int8.h>
 
 //ros vars
 ros::NodeHandle  nh;
@@ -19,6 +18,7 @@ const int FWD1 = 6;
 const int FWD2 = 2;
 const int SR_TRIGGER = 23;
 const int SR_ECHO = 22;
+const int Y_LED = 13;
 
 // defines variables
 long duration;
@@ -36,6 +36,7 @@ void setup() {
  pinMode(FWD2, OUTPUT);
  pinMode(SR_TRIGGER, OUTPUT); // Sets the trigPin as an Output
  pinMode(SR_ECHO, INPUT); // Sets the echoPin as an Input
+ pinMode(Y_LED, OUTPUT);
  
  //ros initialization
  nh.initNode();
@@ -43,7 +44,8 @@ void setup() {
 }
 
 void loop() {
-//  Stop all motors --------
+  
+// -------------- Clear / Stop all motors -------------
 //  digitalWrite(EN1, HIGH);
 //  digitalWrite(EN2, HIGH);
 //  delay(500);
@@ -52,12 +54,13 @@ void loop() {
 //  digitalWrite(FWD1, LOW);
 //  digitalWrite(FWD2, LOW);
 //  delay(500);
-//  ------------------------
 
+
+// ----------------- distance sensore -----------------  
   // Clears the trigPin
   digitalWrite(SR_TRIGGER, LOW);
   delayMicroseconds(2);
-  
+
   // Sets the trigPin on HIGH state for 10 micro seconds
   digitalWrite(SR_TRIGGER, HIGH);
   delayMicroseconds(10);
@@ -88,4 +91,6 @@ void loop() {
       digitalWrite(FWD2, LOW);
       delay(100);
   }
+  
+// ---------------
 }
