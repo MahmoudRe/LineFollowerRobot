@@ -45,7 +45,7 @@ void forward( const std_msgs::Empty& toggle_msg){
 }
 ros::Subscriber<std_msgs::Empty> sub("run_forward", &forward );
 
-void forward( const std_msgs::Empty& toggle_msg){
+void backward( const std_msgs::Empty& toggle_msg){
   clearPins();
   runForward = false;
   
