@@ -27,6 +27,10 @@ boolean runForward = false;
 
 // define speed vars
 int currSpeed = 125;
+int controlDelay = 200;
+int FW1_Speed = 125;
+int FW2_Speed = 125;
+
 int highSpeed = 250;
 int midSpeed = 125;
 int lowSpeed = 50;
@@ -44,88 +48,79 @@ void clearPins() {
 }
 
 //define callbacks and subscriber
-void forward( const std_msgs::Empty& empty_msg){
+void forward(const float fw1_speed, const float fw2_speed){
   clearPins();
   runForward = true;
-  
-  Serial.print("run forward!");
+  FW1_Speed = fw1_speed;
+  FW2_Speed = fw2_speed;
 }
-ros::Subscriber<std_msgs::Empty> subForward("run_forward", &forward );
 
-void backward( const std_msgs::Empty& empty_msg){
+void backward(const float rev1_speed, const float rev2_speed){
   clearPins();
   runForward = false;
-  
-  Serial.print("run backward!");
   
   digitalWrite(EN1, HIGH);
   digitalWrite(EN2, HIGH);
   delay(1);
-  analogWrite(REV1, midSpeed);
-  analogWrite(REV2, midSpeed);
-  delay(1);
+  analogWrite(REV1, rev1_speed);
+  analogWrite(REV2, rev2_speed);
+  
+  delay(controlDelay);
+  clearPins();
 }
-ros::Subscriber<std_msgs::Empty> subBackward("run_backward", &backward );
 
-void right( const std_msgs::Empty& empty_msg){
+void turn(const float fw1_speed, const float fw2_speed){
   clearPins();
   runForward = false;
-
-  Serial.print("turn right!");
   
   digitalWrite(EN1, HIGH);
   digitalWrite(EN2, HIGH);
   delay(1);
-  analogWrite(FWD1, midSpeed);
-  analogWrite(FWD2, lowSpeed);
+  analogWrite(FWD1, fw1_speed);
+  analogWrite(FWD2, fw2_speed);
   
-  //do slight turn; wait 0.5 sec then go forward
-  delay(500);
+  delay(controlDelay);
   clearPins();
 }
-ros::Subscriber<std_msgs::Empty> subRight("turn_right", &right );
 
-void left( const std_msgs::Empty& empty_msg){
-  clearPins();
-  runForward = false;
-  
-  Serial.print("turn left!");
-  
-  digitalWrite(EN1, HIGH);
-  digitalWrite(EN2, HIGH);
-  delay(1);
-  analogWrite(FWD1, lowSpeed);
-  analogWrite(FWD2, midSpeed);
-  
-  //do slight turn; wait 0.5 sec then go forward
-  delay(500);
-  clearPins();
-}
-ros::Subscriber<std_msgs::Empty> subLeft("turn_left", &left );
-
-void stop( const std_msgs::Empty& empty_msg){
+void stop(){
   clearPins();
   runForward = false;
 }
-ros::Subscriber<std_msgs::Empty> subStop("stop", &stop );
-
-//Change speed callbacks and Subscribers
-void highSpeedCall( const std_msgs::Empty& empty_msg){
-  currSpeed = highSpeed;
-}
-ros::Subscriber<std_msgs::Empty> subHighSpeed("highSpeed", &highSpeedCall );
-
-void lowSpeedCall( const std_msgs::Empty& empty_msg){
-  currSpeed = lowSpeed;
-}
-ros::Subscriber<std_msgs::Empty> subLowSpeed("lowSpeed", &lowSpeedCall );
 
 
 //listener to twist and its callback
- void processTwist(const geometry_msgs::Twist& msg) {
-   clearPins();
+ void controlTwist(const geometry_msgs::Twist& msg) {
+   
+   if(msg.linear.x == 0 && msg.angular.z == 0) {     //stop
+     stop();
+   }  
+   else if(msg.linear.x > 0 && msg.angular.z == 0) { //go forward
+     forward(100 * msg.linear.x, 100 * msg.linear.x);
+   }
+   else if(msg.linear.x > 0 && msg.angular.z > 0) {  //turn left-up
+     forward(100 * msg.linear.x, 100);
+   }
+   else if(msg.linear.x > 0 && msg.angular.z < 0) {  //turn right-up
+     forward(100, 100 * msg.linear.x);
+   } 
+   else if (msg.linear.x == 0 && msg.angular.z > 0) { //turn left
+     forward(200, 0);
+   }
+   else if (msg.linear.x == 0 && msg.angular.z < 0) { //turn right
+     forward(0, 200);
+   }
+   else if (msg.linear.x < 0 && msg.angular.z == 0) {  //go backward
+     backward(50 * abs(msg.linear.x), 50 * abs(msg.linear.x));
+   }
+   else if (msg.linear.x < 0 && msg.angular.z > 0) {  //turn right-back
+     backward(50, 50 * abs(msg.linear.x));
+   }
+   else if (msg.linear.x < 0 && msg.angular.z < 0) {  //turn left-back
+     backward(50 * abs(msg.linear.x), 50);
+   }
  }
- ros::Subscriber<geometry_msgs::Twist> subTwist("cmd_vel", &processTwist );
+ ros::Subscriber<geometry_msgs::Twist> subTwist("cmd_vel", &controlTwist );
 
 
 void setup() {
@@ -143,13 +138,6 @@ void setup() {
  //ros initialization
  nh.initNode();
  nh.advertise(chatter);
- nh.subscribe(subForward);
- nh.subscribe(subBackward);
- nh.subscribe(subLeft);
- nh.subscribe(subRight);
- nh.subscribe(subStop);
- nh.subscribe(subHighSpeed);
- nh.subscribe(subLowSpeed);
  
  nh.subscribe(subTwist);
 }
@@ -181,16 +169,15 @@ void loop() {
       digitalWrite(EN1, HIGH);
       digitalWrite(EN2, HIGH);
       delay(1);
-      analogWrite(FWD1, currSpeed);
-      analogWrite(FWD2, currSpeed);
-      delay(1);
+      analogWrite(FWD1, FW1_Speed);
+      analogWrite(FWD2, FW2_Speed);
+      
+      //stop after a quick delay, so doesn't run unless the forward key is pressed
+      delay(controlDelay);
+      runForward = false;
+      clearPins();
   } else {
-      digitalWrite(EN1, HIGH);
-      digitalWrite(EN2, HIGH);
-      delay(1);
-      digitalWrite(FWD1, LOW);
-      digitalWrite(FWD2, LOW);
-      delay(1);
+      clearPins();
   }
   
 // ROS handler spin --------------------
