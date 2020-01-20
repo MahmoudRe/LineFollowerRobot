@@ -76,7 +76,7 @@ void right( const std_msgs::Empty& empty_msg){
   delay(1500);
   runForward = true;
 }
-ros::Subscriber<std_msgs::Empty> subRight("run_right", &right );
+ros::Subscriber<std_msgs::Empty> subRight("turn_right", &right );
 
 void left( const std_msgs::Empty& empty_msg){
   clearPins();
@@ -94,7 +94,13 @@ void left( const std_msgs::Empty& empty_msg){
   delay(5000);
   runForward = true;
 }
-ros::Subscriber<std_msgs::Empty> subLeft("run_left", &left );
+ros::Subscriber<std_msgs::Empty> subLeft("turn_left", &left );
+
+void stop( const std_msgs::Empty& empty_msg){
+  clearPins();
+  runForward = false;
+}
+ros::Subscriber<std_msgs::Empty> subStop("stop", &stop );
 
 
 void setup() {
@@ -116,6 +122,7 @@ void setup() {
  nh.subscribe(subBackward);
  nh.subscribe(subLeft);
  nh.subscribe(subRight);
+ nh.subscribe(subStop);
 }
 
 
@@ -157,7 +164,7 @@ void loop() {
       delay(100);
   }
   
-// ---------------
+// ROS handler spin --------------------
   nh.spinOnce();
   delay(1);
 }
