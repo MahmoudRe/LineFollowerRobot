@@ -2,9 +2,10 @@
 #include <ros.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Empty.h>
+#include <geometry_msgs/Twist.h>
 
 //ros vars
-ros::NodeHandle  nh;
+ros::NodeHandle nh;
 std_msgs::String str_msg;
 ros::Publisher chatter("chatter", &str_msg);
 
@@ -24,16 +25,22 @@ long duration;
 int distance;
 boolean runForward = false;
 
+// define speed vars
+int currSpeed = 125;
+int highSpeed = 250;
+int midSpeed = 125;
+int lowSpeed = 50;
+
 //clear all pins
 void clearPins() {
   digitalWrite(EN1, HIGH);
   digitalWrite(EN2, HIGH);
-  delay(100);
+  delay(1);
   digitalWrite(REV1, LOW);
   digitalWrite(REV2, LOW);
   digitalWrite(FWD1, LOW);
   digitalWrite(FWD2, LOW);
-  delay(100);
+  delay(1);
 }
 
 //define callbacks and subscriber
@@ -53,10 +60,10 @@ void backward( const std_msgs::Empty& empty_msg){
   
   digitalWrite(EN1, HIGH);
   digitalWrite(EN2, HIGH);
-  delay(100);
-  digitalWrite(REV1, HIGH);
-  digitalWrite(REV2, HIGH);
-  delay(100);
+  delay(1);
+  analogWrite(REV1, midSpeed);
+  analogWrite(REV2, midSpeed);
+  delay(1);
 }
 ros::Subscriber<std_msgs::Empty> subBackward("run_backward", &backward );
 
@@ -68,13 +75,13 @@ void right( const std_msgs::Empty& empty_msg){
   
   digitalWrite(EN1, HIGH);
   digitalWrite(EN2, HIGH);
-  delay(100);
-  digitalWrite(FWD1, HIGH);
-  digitalWrite(FWD2, LOW);
+  delay(1);
+  analogWrite(FWD1, midSpeed);
+  analogWrite(FWD2, lowSpeed);
   
-  //do half turn; wait 1.5 sec then go forward
-  delay(1500);
-  runForward = true;
+  //do slight turn; wait 0.5 sec then go forward
+  delay(500);
+  clearPins();
 }
 ros::Subscriber<std_msgs::Empty> subRight("turn_right", &right );
 
@@ -86,13 +93,13 @@ void left( const std_msgs::Empty& empty_msg){
   
   digitalWrite(EN1, HIGH);
   digitalWrite(EN2, HIGH);
-  delay(100);
-  digitalWrite(FWD1, LOW);
-  digitalWrite(FWD2, HIGH);
+  delay(1);
+  analogWrite(FWD1, lowSpeed);
+  analogWrite(FWD2, midSpeed);
   
-  //do half turn; wait 5 sec then go forward
-  delay(5000);
-  runForward = true;
+  //do slight turn; wait 0.5 sec then go forward
+  delay(500);
+  clearPins();
 }
 ros::Subscriber<std_msgs::Empty> subLeft("turn_left", &left );
 
@@ -101,6 +108,24 @@ void stop( const std_msgs::Empty& empty_msg){
   runForward = false;
 }
 ros::Subscriber<std_msgs::Empty> subStop("stop", &stop );
+
+//Change speed callbacks and Subscribers
+void highSpeedCall( const std_msgs::Empty& empty_msg){
+  currSpeed = highSpeed;
+}
+ros::Subscriber<std_msgs::Empty> subHighSpeed("highSpeed", &highSpeedCall );
+
+void lowSpeedCall( const std_msgs::Empty& empty_msg){
+  currSpeed = lowSpeed;
+}
+ros::Subscriber<std_msgs::Empty> subLowSpeed("lowSpeed", &lowSpeedCall );
+
+
+//listener to twist and its callback
+ void processTwist(const geometry_msgs::Twist& msg) {
+   clearPins();
+ }
+ ros::Subscriber<geometry_msgs::Twist> subTwist("cmd_vel", &processTwist );
 
 
 void setup() {
@@ -123,6 +148,10 @@ void setup() {
  nh.subscribe(subLeft);
  nh.subscribe(subRight);
  nh.subscribe(subStop);
+ nh.subscribe(subHighSpeed);
+ nh.subscribe(subLowSpeed);
+ 
+ nh.subscribe(subTwist);
 }
 
 
@@ -151,17 +180,17 @@ void loop() {
     
       digitalWrite(EN1, HIGH);
       digitalWrite(EN2, HIGH);
-      delay(100);
-      digitalWrite(FWD1, HIGH);
-      digitalWrite(FWD2, HIGH);
-      delay(100);
+      delay(1);
+      analogWrite(FWD1, currSpeed);
+      analogWrite(FWD2, currSpeed);
+      delay(1);
   } else {
       digitalWrite(EN1, HIGH);
       digitalWrite(EN2, HIGH);
-      delay(100);
+      delay(1);
       digitalWrite(FWD1, LOW);
       digitalWrite(FWD2, LOW);
-      delay(100);
+      delay(1);
   }
   
 // ROS handler spin --------------------
