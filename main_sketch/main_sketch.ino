@@ -37,15 +37,15 @@ void clearPins() {
 }
 
 //define callbacks and subscriber
-void forward( const std_msgs::Empty& toggle_msg){
+void forward( const std_msgs::Empty& empty_msg){
   clearPins();
   runForward = true;
   
   Serial.print("run forward!");
 }
-ros::Subscriber<std_msgs::Empty> sub("run_forward", &forward );
+ros::Subscriber<std_msgs::Empty> subForward("run_forward", &forward );
 
-void backward( const std_msgs::Empty& toggle_msg){
+void backward( const std_msgs::Empty& empty_msg){
   clearPins();
   runForward = false;
   
@@ -58,7 +58,44 @@ void backward( const std_msgs::Empty& toggle_msg){
   digitalWrite(REV2, HIGH);
   delay(100);
 }
-ros::Subscriber<std_msgs::Empty> sub2("run_backward", &backward );
+ros::Subscriber<std_msgs::Empty> subBackward("run_backward", &backward );
+
+void right( const std_msgs::Empty& empty_msg){
+  clearPins();
+  runForward = false;
+
+  Serial.print("turn right!");
+  
+  digitalWrite(EN1, HIGH);
+  digitalWrite(EN2, HIGH);
+  delay(100);
+  digitalWrite(FWD1, HIGH);
+  digitalWrite(FWD2, LOW);
+  
+  //do half turn; wait 1.5 sec then go forward
+  delay(1500);
+  runForward = true;
+}
+ros::Subscriber<std_msgs::Empty> subRight("run_right", &right );
+
+void left( const std_msgs::Empty& empty_msg){
+  clearPins();
+  runForward = false;
+  
+  Serial.print("turn left!");
+  
+  digitalWrite(EN1, HIGH);
+  digitalWrite(EN2, HIGH);
+  delay(100);
+  digitalWrite(FWD1, LOW);
+  digitalWrite(FWD2, HIGH);
+  
+  //do half turn; wait 5 sec then go forward
+  delay(5000);
+  runForward = true;
+}
+ros::Subscriber<std_msgs::Empty> subLeft("run_left", &left );
+
 
 void setup() {
  //initialize the pins
@@ -75,9 +112,12 @@ void setup() {
  //ros initialization
  nh.initNode();
  nh.advertise(chatter);
- nh.subscribe(sub);
- nh.subscribe(sub2);
+ nh.subscribe(subForward);
+ nh.subscribe(subBackward);
+ nh.subscribe(subLeft);
+ nh.subscribe(subRight);
 }
+
 
 void loop() {
 
