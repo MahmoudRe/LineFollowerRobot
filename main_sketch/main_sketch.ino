@@ -59,9 +59,6 @@ void backward(const float rev1_speed, const float rev2_speed){
   clearPins();
   runForward = false;
   
-  digitalWrite(EN1, HIGH);
-  digitalWrite(EN2, HIGH);
-  delay(1);
   analogWrite(REV1, rev1_speed);
   analogWrite(REV2, rev2_speed);
   
@@ -73,9 +70,6 @@ void turn(const float fw1_speed, const float fw2_speed){
   clearPins();
   runForward = false;
   
-  digitalWrite(EN1, HIGH);
-  digitalWrite(EN2, HIGH);
-  delay(1);
   analogWrite(FWD1, fw1_speed);
   analogWrite(FWD2, fw2_speed);
   
@@ -135,6 +129,10 @@ void setup() {
  pinMode(SR_ECHO, INPUT); // Sets the echoPin as an Input
  pinMode(Y_LED, OUTPUT);
  
+ //set the enable pins
+ digitalWrite(EN1, HIGH);
+ digitalWrite(EN2, HIGH);
+ 
  //ros initialization
  nh.initNode();
  nh.advertise(chatter);
@@ -163,12 +161,6 @@ void loop() {
   
   //run forward and stop when you encounter a blocking object
   if(distance > 20 && runForward) {
-      Serial.print("Distance: ");
-      Serial.println(distance);
-    
-      digitalWrite(EN1, HIGH);
-      digitalWrite(EN2, HIGH);
-      delay(1);
       analogWrite(FWD1, FW1_Speed);
       analogWrite(FWD2, FW2_Speed);
       
@@ -176,9 +168,7 @@ void loop() {
       delay(controlDelay);
       runForward = false;
       clearPins();
-  } else {
-      clearPins();
-  }
+  } 
   
 // ROS handler spin --------------------
   nh.spinOnce();
