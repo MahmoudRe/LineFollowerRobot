@@ -27,7 +27,7 @@ boolean runForward = false;
 
 // define speed vars
 int currSpeed = 125;
-int controlDelay = 200;
+int controlDelay = 100;
 int FW1_Speed = 125;
 int FW2_Speed = 125;
 
@@ -37,9 +37,6 @@ int lowSpeed = 50;
 
 //clear all pins
 void clearPins() {
-  digitalWrite(EN1, HIGH);
-  digitalWrite(EN2, HIGH);
-  delay(1);
   digitalWrite(REV1, LOW);
   digitalWrite(REV2, LOW);
   digitalWrite(FWD1, LOW);
@@ -99,10 +96,10 @@ void stop(){
      forward(100, 100 * msg.linear.x);
    } 
    else if (msg.linear.x == 0 && msg.angular.z > 0) { //turn left
-     forward(200, 0);
+     turn(200, 0);
    }
    else if (msg.linear.x == 0 && msg.angular.z < 0) { //turn right
-     forward(0, 200);
+     turn(0, 200);
    }
    else if (msg.linear.x < 0 && msg.angular.z == 0) {  //go backward
      backward(50 * abs(msg.linear.x), 50 * abs(msg.linear.x));
@@ -130,6 +127,7 @@ void setup() {
  pinMode(Y_LED, OUTPUT);
  
  //set the enable pins
+ clearPins();
  digitalWrite(EN1, HIGH);
  digitalWrite(EN2, HIGH);
  
